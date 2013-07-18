@@ -38,52 +38,42 @@ var load_document = function (url, callback) {
             callback(res);
         }
     };
-    xhr.open("GET", url, false);
+    xhr.open("GET", url, true);
     xhr.send();
 };
 var is_next_btn = function (btn) {
-    return btn.tagName.toLowerCase() == 'a' && /^.?下一页.?$/.test(btn.innerText);
+    return btn.tagName.toLowerCase() == 'a' && /^.?(下一页|下页).?$/.test(btn.innerText);
 };
 var get_position = function(el) {
-    var res = [];
+    var path = [];
     var p = el;
     while(p.tagName.toLowerCase() != 'body') {
-        res.push(p.parentElement.children.indexOf(p));
-        p = el.parentElement;
+        var part = p.tagName;
+        if(p.id && p.id != '') {
+            part += "#" + p.id;
+        }
+        path.push(part);
+        p = p.parentElement;
     }
     var classList = [];
     each.call(el.classList, function (i, c) {
         classList.push(c);
     });
-    return {
-        tagName: el.tagName,
-        classList: classList,
-        id: el.id,
-        indexes: res.reverse()
-    };
+    var res = path.reverse().join(' ');
+    if(classList.length > 0) {
+        res += "." + classList.join('.');
+    }
+    if(el.id && el.id != '') {
+        res += '#' + el.id;
+    }
+    return res;
 };
 var get_el = function(position, document, satisfy) {
-    var query = position.tagName;
-    if(position.classList.length > 0) {
-        query += "." + position.classList.join('.');
-    }
-    if(position.id && position.id != '') {
-        query += '#' + position.id;
-    }
-    each.call(document.querySelectorAll(query), function (i, el) {
-        if(el.id == position.id && (!satisfy || satisfy(el))) {
-            return el;
+    var els = document.querySelectorAll(position);
+    for(var i = 0, l = els.length; i < l; ++i) {
+        if(!satisfy || satisfy(els[i])) {
+            return els[i];
         }
-    });
-    var res = document.querySelector('body');
-    for(var i = 0; i < position.length; ++i) {
-        res = res.children[position[i]];
-        if(res == null) {
-            break;
-        }
-    }
-    if(!satisfy || satisfy(res)) {
-        return res;
     }
 };
 
@@ -95,19 +85,20 @@ var detect_context = function (document) {
         each.call(next_btns, function (i, btn) {
             if(is_next_btn(btn)) {
                 res.next_btn = btn;
-            //    res.next_btn_position = get_position(btn);
+                res.next_btn_position = get_position(btn);
                 res.pager = get_wrap_ancient(res.next_btn);
             }
         });
-    console.log(next_btns.length);
         //var next_document = load_document(res.next_url);
         //next_document
         res.container = document.querySelector(".picture-list").children[0];
-        //res.container_position = get_position(res.container);
+        res.container_position = get_position(res.container);
     } else {
         res.next_btn_position = current_context.next_btn_position;
         res.container_position = current_context.container_position;
-        res.next_btn = get_el(res.next_btn_position, document, is_next_btn);
+        res.next_btn = get_el(res.next_btn_position, document, function (btn) {
+            return btn.innerHTML == current_context.next_btn.innerHTML;
+        });
         res.container = get_el(res.container_position, document);
     }
     
@@ -120,24 +111,27 @@ var detect_context = function (document) {
 };
 
 var merge_view = function (view_container, context) {
-    context.items.each(function (i, el) {
-        console.log(el);
+    each.call(context.items, function (i, el) {
         view_container.appendChild(el);
     });
 };
 
+var loading = false;
 var load_next_page = function () {
-    load_document(current_context.next_url, function (next_doc) {
-        current_context = detect_context(next_doc);
-        console.log("fin");
-        merge_view(view_container, current_context);
-    });
+    if(!loading) {
+        loading = true;
+        load_document(current_context.next_url, function (next_doc) {
+            current_context = detect_context(next_doc);
+            merge_view(view_container, current_context);
+            loading = false;
+        });
+    }
 };
 
-var SCROLL_TRIG_LIMIT = 100;
+var SCROLL_TRIG_LIMIT = 200;
 var register_scroll_check = function () {
     document.addEventListener('scroll', function () {
-        if(document.height - window.screen.availHeight - window.scrollY < SCROLL_TRIG_LIMIT) {
+        if(document.height - window.innerHeight - window.scrollY < SCROLL_TRIG_LIMIT) {
             load_next_page();
         }
     });
