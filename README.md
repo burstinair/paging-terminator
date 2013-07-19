@@ -1,6 +1,6 @@
 paging-terminator
 =================
 
-目前只可运行于http://dianping.com/shop/[shop_id]/photos。
+目前支持大多数列表分页页面。
 
-打开上述页面后点击按钮并滚动启用。
+打开页面后，点击按钮启用。
