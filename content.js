@@ -1,5 +1,15 @@
 (function (document) {
 
+var TYPE_LIST = 1;
+var TYPE_SINGLE_PICTURE = 2;
+var TYPE_TEXT = 3;
+
+var CONTAINER_SIZE_LIMIT = 5;
+var KIND_COUNT_RATE_LIMIT = 0.4;
+var LIST_ITEM_COUNT_LIMIT = 5;
+
+var SCROLL_TRIG_LIMIT = 200;
+
 var each = function (callback) {
     for(var i = 0, l = this.length; i < l; ++i) {
         if(callback(i, this[i])) {
@@ -113,16 +123,26 @@ var show_tip = function (msg) {
     document.querySelector("body").appendChild(tip_panel);
 };
 
-var TYPE_LIST = 1;
-var TYPE_SINGLE_PICTURE = 2;
-var TYPE_TEXT = 3;
-var CONTAINER_SIZE_LIMIT = 5;
-var KIND_COUNT_RATE_LIMIT = 0.4;
-var LIST_ITEM_COUNT_LIMIT = 5;
-var MAX_INT = 2147483647;
 var search_container_in_node = function (el, container_results) {
-    //TODO: TextNode, Single Picture, etc.
-    //if(el.)
+    //TODO: Single Picture
+    
+    //text container
+    var only_text_node = true;
+    for(var i = 0, l = el.childNodes.length; i < l; ++i) {
+        if(el.childNodes[i].nodeType != Node.TEXT_NODE) {
+            only_text_node = false;
+            break;
+        }
+    }
+    if(only_text_node) {
+        container_results.push({
+            container: el,
+            type: TYPE_TEXT
+        });
+        return;
+    }
+
+    //list container
     var kind_dic = {};
     var child_count = el.children.length, kind_count = 0;
     if(child_count >= LIST_ITEM_COUNT_LIMIT) {
@@ -286,7 +306,6 @@ var load_next_page = function () {
     }
 };
 
-var SCROLL_TRIG_LIMIT = 200;
 var register_scroll_check = function () {
     document.addEventListener('scroll', function () {
         if(document.height - window.innerHeight - window.scrollY < SCROLL_TRIG_LIMIT) {
