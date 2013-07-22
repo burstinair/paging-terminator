@@ -37,7 +37,7 @@ var load_document = function (url, callback) {
 var is_next_btn = function (btn) {
     return btn.tagName.toLowerCase() == 'a' && /^.?(下一页|下页).?$/.test(btn.innerText);
 };
-var get_kind = function (el) {
+var get_class_kind = function (el) {
     var res = "";
     var classList = [];
     each.call(el.classList, function (i, c) {
@@ -46,10 +46,17 @@ var get_kind = function (el) {
     if(classList.length > 0) {
         res += "." + classList.join('.');
     }
+    return res;
+};
+var get_id_kind = function (el) {
+    var res = "";
     if(el.id && el.id != '') {
         res += '#' + el.id;
     }
     return res;
+};
+var get_kind = function (el) {
+    return get_class_kind(el) + get_id_kind(el);
 };
 var get_position = function(el) {
     var path = [], path_full = [];
@@ -67,7 +74,6 @@ var get_position = function(el) {
 var get_el = function(position, document, satisfy) {
     for(var j = 0, lp = position.length; j < lp; ++j) {
         var els = document.querySelectorAll(position[j]);
-        console.log(els, position[j]);
         for(var i = 0, l = els.length; i < l; ++i) {
             if(!satisfy || satisfy(els[i])) {
                 return els[i];
@@ -103,7 +109,7 @@ var search_container_in_node = function (el) {
     if(child_count >= LIST_ITEM_COUNT_LIMIT) {
         for(var i = 0; i < child_count; ++i) {
             var cel = el.children[i];
-            var kind = cel.tagName + get_kind(cel);
+            var kind = cel.tagName;
             if(!kind_dic[kind]) {
                 ++kind_count;
                 kind_dic[kind] = true;
@@ -136,7 +142,7 @@ var search_container = function (document, pager) {
         while(pager_path[j] == container_path[j] && j < pager_path.length && j < container_path.length) {
             ++j;
         }
-        if(j > max_dis || (j == max_dis && get_size(container_context.container) > max_size)) {
+        if(j < pager_path.length && j < container_path.length && (j > max_dis || (j == max_dis && get_size(container_context.container) > max_size))) {
             max_dis = j;
             max_size = get_size(container_context.container);
             res = container_context;
@@ -153,8 +159,12 @@ var search_container = function (document, pager) {
                     tagName: cel.tagName,
                     classList: cel.classList,
                     id: cel.id,
-                    count: 0
+                    count: 1
                 };
+                if(max_count == 0) {
+                    max_count = 1;
+                    main_kind = kind_dic[kind];
+                }
             } else {
                 kind_dic[kind].count++;
                 if(kind_dic[kind].count > max_count) {
@@ -173,11 +183,11 @@ var search_container = function (document, pager) {
             if(el.classList.length == 0 && main_kind.classList.length == 0) {
                 return false;
             }
-            each.call(el.classList, function (i, c) {
-                if(indexOf.apply(main_kind.classList, [c]) != -1) {
+            for(var i = 0, l = el.classList.length; i < l; ++i) {
+                if(indexOf.apply(main_kind.classList, [el.classList[i]]) != -1) {
                     return false;
                 }
-            });
+            }
             return true;
         };
     } else {
@@ -221,7 +231,6 @@ var detect_context = function (document) {
         res.next_url = res.next_btn.attributes['href'].value;
     }
     res.items = [];
-    console.log(res);
     each.call(res.container.childNodes, function (i, el) {
         if(!res.should_exclude(el)) {
             res.items.push(el);
