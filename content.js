@@ -97,11 +97,10 @@ var get_size = function (el) {
 var TYPE_LIST = 1;
 var TYPE_SINGLE_PICTURE = 2;
 var TYPE_TEXT = 3;
-var KIND_COUNT_RATE_LIMIT = 0.3;
+var KIND_COUNT_RATE_LIMIT = 0.4;
 var LIST_ITEM_COUNT_LIMIT = 5;
 var MAX_INT = 2147483647;
-var container_results = [];
-var search_container_in_node = function (el) {
+var search_container_in_node = function (el, container_results) {
     //TODO: TextNode, Single Picture, etc.
     //if(el.)
     var kind_dic = {};
@@ -123,16 +122,12 @@ var search_container_in_node = function (el) {
         }
     }
     for(var i = 0; i < child_count; ++i) {
-        var res = search_container_in_node(el.children[i]);
-        if(res) {
-            container_results.push(res);
-        }
+        search_container_in_node(el.children[i], container_results)
     }
 };
 var search_container = function (document, pager) {
-    container_results = [];
-    search_container_in_node(document.querySelector('body'));
-    
+    var container_results = [];
+    search_container_in_node(document.querySelector('body'), container_results);
     var res, max_dis = 0, max_size = 0;
     var pager_path = get_path(pager);
     for(var i = 0, l = container_results.length; i < l; ++i) {
@@ -153,7 +148,7 @@ var search_container = function (document, pager) {
         var kind_dic = {}, main_kind, max_count = 0;
         for(var i = 0, l = res.container.children.length; i < l; ++i) {
             var cel = res.container.children[i];
-            var kind = cel.tagName + get_kind(cel);
+            var kind = cel.tagName + get_class_kind(cel);
             if(!kind_dic[kind]) {
                 kind_dic[kind] = {
                     tagName: cel.tagName,
@@ -243,7 +238,7 @@ var merge_view = function (view_container, context) {
     each.call(context.items, function (i, el) {
         view_container.appendChild(el.cloneNode(true));
     });
- };
+};
 
 var loading = false;
 var load_next_page = function () {
