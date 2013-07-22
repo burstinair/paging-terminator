@@ -1,12 +1,14 @@
 (function (document) {
 
 var each = function (callback) {
-    for(var i = 0; i < this.length; ++i) {
-        callback(i, this[i]);
+    for(var i = 0, l = this.length; i < l; ++i) {
+        if(callback(i, this[i])) {
+            break;
+        }
     }
 };
 var indexOf = function (item) {
-    for(var i = 0; i < this.length; ++i) {
+    for(var i = 0, l = this.length; i < l; ++i) {
         if(item === this[i]) {
             return i;
         }
@@ -103,6 +105,12 @@ var get_pager = function (next_btn) {
         res = res.parentElement;
     }
     return res;
+};
+var show_tip = function (msg) {
+    var tip_panel = document.createElement("div");
+    tip_panel.classList.add('burst-paging-terminator-tip');
+    tip_panel.innerHTML = "<div class='bkg'></div><div class='msg'>" + msg + "</div>";
+    document.querySelector("body").appendChild(tip_panel);
 };
 
 var TYPE_LIST = 1;
@@ -222,8 +230,13 @@ var detect_context = function (document) {
                 res.next_btn = btn;
                 res.next_btn_position = get_position(btn);
                 res.pager = get_pager(res.next_btn);
+                return true;
             }
         });
+        if(res.pager == null) {
+            show_tip("未探测到分页。");
+            return null;
+        }
         var container_context = search_container(document, res.pager);
         res.should_exclude = container_context.should_exclude;
         res.container = container_context.container;
