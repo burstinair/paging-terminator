@@ -119,7 +119,7 @@ var get_pager = function (next_btn) {
 var show_tip = function (msg) {
     var tip_panel = document.createElement("div");
     tip_panel.classList.add('burst-paging-terminator-tip');
-    tip_panel.innerHTML = "<div class='bkg'></div><div class='msg'>" + msg + "</div>";
+    tip_panel.innerHTML = "<div class='msg'>" + msg + "</div>";
     document.querySelector("body").appendChild(tip_panel);
 };
 
