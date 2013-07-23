@@ -289,21 +289,23 @@ var detect_context = function (document) {
 var merge_view = function (view_container, context) {
     each.call(context.items, function (i, el) {
         var item = el.cloneNode(true);
-        var ori_opacity = item.style.opacity;
-        var target = parseFloat(ori_opacity);
-        if(isNaN(target)) {
-            target = 1;
-        }
-        var co = 0;
-        item.style.opacity = co.toString();
-        var listener = setInterval(function () {
-            co += 0.1;
-            item.style.opacity = co.toString();
-            if(co > target) {
-                clearInterval(listener);
-                item.style.opacity = ori_opacity;
+        if(item.nodeType == Node.ELEMENT_NODE) {
+            var ori_opacity = item.style.opacity;
+            var target = parseFloat(ori_opacity);
+            if(isNaN(target)) {
+                target = 1;
             }
-        }, 30);
+            var co = 0;
+            item.style.opacity = co.toString();
+            var listener = setInterval(function () {
+                co += 0.1;
+                item.style.opacity = co.toString();
+                if(co > target) {
+                    clearInterval(listener);
+                    item.style.opacity = ori_opacity;
+                }
+            }, 30);
+        }
         view_container.appendChild(item);
     });
 };
